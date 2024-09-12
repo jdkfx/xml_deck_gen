@@ -239,7 +239,7 @@ fn parse(tokens: &[Token]) -> Result<Node, String> {
                             current_node.tag_name, tag_name
                         ));
                     }
-                } //
+                }
             }
             TokenType::Char => {
                 if let Some(data) = &token.data {
