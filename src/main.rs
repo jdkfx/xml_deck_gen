@@ -1,7 +1,7 @@
-use std::env;
-use genpdf::Element;
-use genpdf::{Document, SimplePageDecorator, Size, Mm, fonts, style::Style};
 use genpdf::elements::Paragraph;
+use genpdf::Element;
+use genpdf::{fonts, style::Style, Document, Mm, SimplePageDecorator, Size};
+use std::env;
 
 #[derive(Debug, PartialEq)]
 enum State {
@@ -29,7 +29,12 @@ struct Token {
 }
 
 impl Token {
-    fn new(token_type: TokenType, tag_name: Option<String>, self_closing: bool, data: Option<String>) -> Self {
+    fn new(
+        token_type: TokenType,
+        tag_name: Option<String>,
+        self_closing: bool,
+        data: Option<String>,
+    ) -> Self {
         Token {
             token_type,
             tag_name,
@@ -37,6 +42,13 @@ impl Token {
             data,
         }
     }
+}
+
+#[derive(Debug, Clone)]
+struct Node {
+    tag_name: String,
+    children: Vec<Node>,
+    text: Option<String>,
 }
 
 fn main() {
@@ -82,10 +94,21 @@ fn main() {
         doc.push(paragraph.clone());
     }
 
-    println!("Exporting PDF files...");
-    doc.render_to_file(output_file_name).expect("Failed to write PDF file");
+    let xml = "<deck><title>Sample Deck</title></deck>";
+    let tokens = tokenize(xml);
 
-    show_xml_tokens();
+    match parse(&tokens) {
+        Ok(node) => {
+            println!("Parsed node: {:?}", node);
+        }
+        Err(err) => {
+            eprintln!("Parsing error: {}", err);
+        }
+    }
+
+    println!("Exporting PDF files...");
+    doc.render_to_file(output_file_name)
+        .expect("Failed to write PDF file");
 }
 
 fn tokenize(xml: &str) -> Vec<Token> {
@@ -100,23 +123,43 @@ fn tokenize(xml: &str) -> Vec<Token> {
                 if c == '<' {
                     state = State::TagOpen;
                 } else {
-                    tokens.push(Token::new(TokenType::Char, None, false, Some(c.to_string())));
+                    tokens.push(Token::new(
+                        TokenType::Char,
+                        None,
+                        false,
+                        Some(c.to_string()),
+                    ));
                 }
             }
             State::TagOpen => {
                 if c == '/' {
                     state = State::EndTagOpen;
                 } else if c.is_alphabetic() {
-                    current_token = Some(Token::new(TokenType::StartTag, Some(c.to_string()), false, None));
+                    current_token = Some(Token::new(
+                        TokenType::StartTag,
+                        Some(c.to_string()),
+                        false,
+                        None,
+                    ));
                     state = State::TagName;
                 } else {
-                    tokens.push(Token::new(TokenType::Char, None, false, Some('<'.to_string())));
+                    tokens.push(Token::new(
+                        TokenType::Char,
+                        None,
+                        false,
+                        Some('<'.to_string()),
+                    ));
                     state = State::Data;
                 }
             }
             State::EndTagOpen => {
                 if c.is_alphabetic() {
-                    current_token = Some(Token::new(TokenType::EndTag, Some(c.to_string()), false, None));
+                    current_token = Some(Token::new(
+                        TokenType::EndTag,
+                        Some(c.to_string()),
+                        false,
+                        None,
+                    ));
                     state = State::TagName;
                 }
             }
@@ -130,7 +173,8 @@ fn tokenize(xml: &str) -> Vec<Token> {
                     state = State::Data;
                 } else if c.is_uppercase() {
                     if let Some(ref mut token) = current_token {
-                        token.tag_name = Some(token.tag_name.clone().unwrap() + &c.to_lowercase().to_string());
+                        token.tag_name =
+                            Some(token.tag_name.clone().unwrap() + &c.to_lowercase().to_string());
                     }
                 } else if let Some(ref mut token) = current_token {
                     token.tag_name = Some(token.tag_name.clone().unwrap() + &c.to_string());
@@ -152,11 +196,65 @@ fn tokenize(xml: &str) -> Vec<Token> {
     tokens
 }
 
-fn show_xml_tokens() {
-    let xml = "<deck><title>Sample Deck</title></deck>";
-    let tokens = tokenize(xml);
+fn parse(tokens: &[Token]) -> Result<Node, String> {
+    let mut stack: Vec<Node> = Vec::new();
+    let mut current_node = Node {
+        tag_name: String::new(),
+        children: Vec::new(),
+        text: None,
+    };
 
     for token in tokens {
-        println!("{:?}", token);
+        match token.token_type {
+            TokenType::StartTag => {
+                if let Some(tag_name) = &token.tag_name {
+                    if !current_node.tag_name.is_empty() {
+                        stack.push(current_node.clone());
+                    }
+                    current_node = Node {
+                        tag_name: tag_name.clone(),
+                        children: Vec::new(),
+                        text: None,
+                    };
+                }
+            }
+            TokenType::EndTag => {
+                if let Some(tag_name) = &token.tag_name {
+                    if tag_name == &current_node.tag_name {
+                        let completed_node = Node {
+                            tag_name: current_node.tag_name.clone(),
+                            children: current_node.children.clone(),
+                            text: current_node.text.clone(),
+                        };
+
+                        current_node = if let Some(mut parent) = stack.pop() {
+                            parent.children.push(completed_node);
+                            parent
+                        } else {
+                            completed_node
+                        };
+                    } else {
+                        return Err(format!(
+                            "Mismatched end tag: expected </{}> but found </{}>",
+                            current_node.tag_name, tag_name
+                        ));
+                    }
+                } //
+            }
+            TokenType::Char => {
+                if let Some(data) = &token.data {
+                    current_node.text = Some(current_node.text.take().unwrap_or_default() + data);
+                }
+            }
+            TokenType::Eof => {
+                break;
+            }
+        }
     }
+
+    if !stack.is_empty() {
+        return Err("Unclosed tags remaining.".to_string());
+    }
+
+    Ok(current_node)
 }
