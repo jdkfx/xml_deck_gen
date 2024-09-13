@@ -1,7 +1,10 @@
 use genpdf::elements::Paragraph;
 use genpdf::Element;
 use genpdf::{fonts, style::Style, Document, Mm, SimplePageDecorator, Size};
+use regex::Regex;
 use std::env;
+use std::fs::File;
+use std::io::Read;
 
 #[derive(Debug, PartialEq)]
 enum State {
@@ -54,13 +57,34 @@ struct Node {
 fn main() {
     let args: Vec<String> = env::args().collect();
 
-    if args.len() < 2 || !args[1].contains(".pdf") {
-        eprintln!("Error: Output file name is required.");
+    if args.len() < 3 {
+        eprintln!("Error: Not enough arguments!");
         std::process::exit(1);
     }
 
-    let output_file_name = &args[1];
-    let size = args.get(2).map(|s| s.as_str());
+    if !args[1].ends_with(".xml") {
+        eprintln!("Error: Input file name is required!");
+        std::process::exit(1);
+    }
+
+    if !args[2].ends_with(".pdf") {
+        eprintln!("Error: Output file name is required!");
+        std::process::exit(1);
+    }
+
+    let input_file_name = &args[1];
+    let output_file_name = &args[2];
+    let output_deck_size = args.get(3).map(|s| s.as_str());
+
+    let mut input_file = File::open(input_file_name).expect("Error: Input File not found!");
+
+    let mut xml_contents = String::new();
+    input_file
+        .read_to_string(&mut xml_contents)
+        .expect("Error: Something went wrong reading the file!");
+
+    let re = Regex::new(r"[\t\n]").unwrap();
+    xml_contents = re.replace_all(&xml_contents, "").to_string();
 
     let font_family = fonts::from_files("./fonts/Noto_Sans/static/", "NotoSans", None)
         .expect("Failed to load font family");
@@ -68,7 +92,7 @@ fn main() {
     let mut doc = Document::new(font_family);
     doc.set_title("Demo document");
 
-    let (page_width, page_height, font_size): (Mm, Mm, u8) = match size {
+    let (page_width, page_height, font_size): (Mm, Mm, u8) = match output_deck_size {
         Some("wide") => {
             println!("Size is set to wide. Applying wide settings...");
             (Mm::from(254.0), Mm::from(142.9), 14u8)
@@ -94,8 +118,7 @@ fn main() {
         doc.push(paragraph.clone());
     }
 
-    let xml = "<deck><title>Sample Deck</title></deck>";
-    let tokens = tokenize(xml);
+    let tokens = tokenize(&xml_contents);
 
     match parse(&tokens) {
         Ok(node) => {
