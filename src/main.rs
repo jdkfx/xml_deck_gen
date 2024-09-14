@@ -44,7 +44,6 @@ fn main() {
 
     match parse(&tokens) {
         Ok(node) => {
-            println!("Parsed node: {:?}", node);
             generate(output_deck_size, output_file_name, node);
         }
         Err(err) => {
