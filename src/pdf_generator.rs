@@ -49,6 +49,13 @@ pub fn generate(output_deck_size: Option<&str>, output_file_name: &String, node:
                                 doc.push(title_paragraph);
                             }
                         }
+                        "head" => {
+                            if let Some(text) = grandchild.text {
+                                let text_paragraph =
+                                    Paragraph::new(text).styled(Style::new().bold().with_font_size(30));
+                                doc.push(text_paragraph);
+                            }
+                        }
                         "text" => {
                             if let Some(text) = grandchild.text {
                                 let text_paragraph =
