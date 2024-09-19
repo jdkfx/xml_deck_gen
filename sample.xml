@@ -5,6 +5,9 @@
 		</title>
 	</page>
 	<page>
+		<head>
+			xml_deck_gen
+		</head>
 		<text>
 			This product is a Rust application that quickly, easily, and simply generates PDF files of slides.
 		</text>
