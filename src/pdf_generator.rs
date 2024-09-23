@@ -7,23 +7,13 @@ use xml_parser::Node;
 
 use crate::xml_parser;
 
-pub fn generate(output_deck_size: Option<&str>, output_file_name: &String, node: Node) {
+pub fn generate(node: Node) {
     let font_family = fonts::from_files("./fonts/Noto_Sans/static/", "NotoSans", None)
         .expect("Failed to load font family");
 
     let mut doc = Document::new(font_family);
 
-    let (page_width, page_height): (Mm, Mm) = match output_deck_size {
-        Some("wide") => {
-            println!("Size is set to wide. Applying wide settings...");
-            (Mm::from(254.0), Mm::from(142.9))
-        }
-        _ => {
-            println!("Size is not set. Applying default settings...");
-            (Mm::from(275.1), Mm::from(190.5))
-        }
-    };
-    let page_size = Size::new(page_width, page_height);
+    let page_size = Size::new(Mm::from(275.1), Mm::from(190.5));
     doc.set_paper_size(page_size);
     let mut decorator = SimplePageDecorator::new();
     decorator.set_margins(Margins::trbl(
@@ -34,6 +24,8 @@ pub fn generate(output_deck_size: Option<&str>, output_file_name: &String, node:
     ));
     doc.set_page_decorator(decorator);
 
+    let mut title: Option<String> = None;
+
     if node.tag_name == "deck" {
         for (i, child) in node.children.iter().enumerate() {
             if child.tag_name == "page" {
@@ -41,6 +33,8 @@ pub fn generate(output_deck_size: Option<&str>, output_file_name: &String, node:
                     match grandchild.tag_name.as_str() {
                         "title" => {
                             if let Some(text) = grandchild.text {
+                                title = Some(text.clone());
+
                                 doc.set_title(text.clone());
                                 let title_paragraph = Paragraph::new(text.clone())
                                     .aligned(Alignment::Center)
@@ -134,6 +128,8 @@ pub fn generate(output_deck_size: Option<&str>, output_file_name: &String, node:
     }
 
     println!("Exporting PDF files...");
-    doc.render_to_file(output_file_name)
-        .expect("Failed to write PDF file");
+    if let Some(output_file) = title {
+        doc.render_to_file(format!("{}.pdf", output_file.replace(" ", "_")))
+            .expect("Failed to write PDF file");
+    }
 }
