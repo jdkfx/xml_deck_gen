@@ -3,6 +3,11 @@
 		<title>
 			Sample Deck
 		</title>
+		<br></br>
+		<image>
+			<path>./images/1.jpg</path>
+			<scale>0.9</scale>
+		</image>
 	</page>
 	<page>
 		<head>
@@ -11,14 +16,29 @@
 		<text>
 			This product is a Rust application that quickly, easily, and simply generates PDF files of slides.
 		</text>
-		<text>
-			The slide size is set to 16:9 when 'wide' is specified as a command argument at runtime.
-		</text>
-		<text>
-			Currently, the application only has the functionality to read text written in the program and generate PDF files.
-		</text>
-		<text>
-			However, in the future, we plan to implement a feature that will allow the creation of slides by reading XML files.
-		</text>
+		<text>Reads XML files and generates PDFs.</text>
+	</page>
+	<page>
+		<head>List</head>
+		<text>Unordered lists is available.</text>
+		<ul>
+			<li>Apple</li>
+			<li>Banana</li>
+			<li>Cherry</li>
+		</ul>
+		<br></br>
+		<text>Order lists are also available.</text>
+		<ol>
+			<li>Red</li>
+			<li>Green</li>
+			<li>Yellow</li>
+		</ol>
+	</page>
+	<page>
+		<head>Image</head>
+		<text>Images can also be inserted.</text>
+		<image>
+			<path>./images/2.jpg</path>
+		</image>
 	</page>
 </deck>

@@ -1,9 +1,8 @@
-use genpdf::elements::PageBreak;
-use genpdf::elements::Paragraph;
-use genpdf::Alignment;
+use genpdf::elements::{Break, Image, OrderedList, PageBreak, Paragraph, UnorderedList};
 use genpdf::Element;
 use genpdf::Margins;
 use genpdf::{fonts, style::Style, Document, Mm, SimplePageDecorator, Size};
+use genpdf::{Alignment, Scale};
 use xml_parser::Node;
 
 use crate::xml_parser;
@@ -45,7 +44,7 @@ pub fn generate(output_deck_size: Option<&str>, output_file_name: &String, node:
                                 doc.set_title(text.clone());
                                 let title_paragraph = Paragraph::new(text.clone())
                                     .aligned(Alignment::Center)
-                                    .styled(Style::new().with_font_size(48));
+                                    .styled(Style::new().bold().with_font_size(30));
                                 doc.push(title_paragraph);
                             }
                         }
@@ -61,6 +60,66 @@ pub fn generate(output_deck_size: Option<&str>, output_file_name: &String, node:
                                 let text_paragraph =
                                     Paragraph::new(text).styled(Style::new().with_font_size(24));
                                 doc.push(text_paragraph);
+                            }
+                        }
+                        "ul" => {
+                            let mut list = UnorderedList::new();
+                            for item in grandchild.children {
+                                if item.tag_name == "li" {
+                                    if let Some(text) = item.text {
+                                        list.push(Paragraph::new(text));
+                                    }
+                                }
+                            }
+                            let styled_list = list.styled(Style::new().with_font_size(24));
+                            doc.push(styled_list);
+                        }
+                        "ol" => {
+                            let mut list = OrderedList::new();
+                            for item in grandchild.children {
+                                if item.tag_name == "li" {
+                                    if let Some(text) = item.text {
+                                        list.push(Paragraph::new(text));
+                                    }
+                                }
+                            }
+                            let styled_list = list.styled(Style::new().with_font_size(24));
+                            doc.push(styled_list);
+                        }
+                        "br" => {
+                            doc.push(Break::new(1));
+                        }
+                        "image" => {
+                            let mut img_path: Option<String> = None;
+                            let mut scale_value = 1.0;
+
+                            for item in grandchild.children {
+                                match item.tag_name.as_str() {
+                                    "path" => {
+                                        if let Some(text) = item.text {
+                                            img_path = Some(text.clone());
+                                        }
+                                    }
+                                    "scale" => {
+                                        if let Some(text) = item.text {
+                                            if let Ok(parsed_scale) = text.parse::<f64>() {
+                                                scale_value = parsed_scale;
+                                            } else {
+                                                eprintln!("Failed to parse scale value: {}", text);
+                                            }
+                                        }
+                                    }
+                                    _ => {}
+                                }
+                            }
+
+                            if let Some(path) = img_path {
+                                let image = Image::from_path(&path)
+                                    .expect("Unable to load image")
+                                    .with_alignment(Alignment::Center)
+                                    .with_scale(Scale::new(scale_value, scale_value));
+
+                                doc.push(image);
                             }
                         }
                         _ => {}
