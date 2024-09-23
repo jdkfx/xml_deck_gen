@@ -11,7 +11,7 @@ use xml_parser::{parse, tokenize};
 fn main() {
     let args: Vec<String> = env::args().collect();
 
-    if args.len() < 3 {
+    if args.len() < 2 {
         eprintln!("Error: Not enough arguments!");
         std::process::exit(1);
     }
@@ -21,16 +21,7 @@ fn main() {
         std::process::exit(1);
     }
 
-    if !args[2].ends_with(".pdf") {
-        eprintln!("Error: Output file name is required!");
-        std::process::exit(1);
-    }
-
-    let input_file_name = &args[1];
-    let output_file_name = &args[2];
-    let output_deck_size = args.get(3).map(|s| s.as_str());
-
-    let mut input_file = File::open(input_file_name).expect("Error: Input File not found!");
+    let mut input_file = File::open(&args[1]).expect("Error: Input File not found!");
 
     let mut xml_contents = String::new();
     input_file
@@ -44,7 +35,7 @@ fn main() {
 
     match parse(&tokens) {
         Ok(node) => {
-            generate(output_deck_size, output_file_name, node);
+            generate(node);
         }
         Err(err) => {
             eprintln!("Parsing error: {}", err);
