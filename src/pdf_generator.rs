@@ -1,5 +1,4 @@
-use genpdf::elements::PageBreak;
-use genpdf::elements::Paragraph;
+use genpdf::elements::{Break, OrderedList, PageBreak, Paragraph, UnorderedList};
 use genpdf::Alignment;
 use genpdf::Element;
 use genpdf::Margins;
@@ -62,6 +61,33 @@ pub fn generate(output_deck_size: Option<&str>, output_file_name: &String, node:
                                     Paragraph::new(text).styled(Style::new().with_font_size(24));
                                 doc.push(text_paragraph);
                             }
+                        }
+                        "ul" => {
+                            let mut list = UnorderedList::new();
+                            for item in grandchild.children {
+                                if item.tag_name == "li" {
+                                    if let Some(text) = item.text {
+                                        list.push(Paragraph::new(text));
+                                    }
+                                }
+                            }
+                            let styled_list = list.styled(Style::new().with_font_size(24));
+                            doc.push(styled_list);
+                        }
+                        "ol" => {
+                            let mut list = OrderedList::new();
+                            for item in grandchild.children {
+                                if item.tag_name == "li" {
+                                    if let Some(text) = item.text {
+                                        list.push(Paragraph::new(text));
+                                    }
+                                }
+                            }
+                            let styled_list = list.styled(Style::new().with_font_size(24));
+                            doc.push(styled_list);
+                        }
+                        "br" => {
+                            doc.push(Break::new(1));
                         }
                         _ => {}
                     }
