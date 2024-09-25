@@ -9,6 +9,15 @@
 
 ## 実行
 
+フォントを指定する場合、`fonts`ディレクトリにフォントファイルを導入してください。
+
+また、以下のフォントファイルを指定する箇所を適宜書き換えてください。
+
+```rust
+let font_family = fonts::from_files("./fonts/Noto_Sans/static/", "NotoSans", None)
+    .expect("Failed to load font family");
+```
+
 プロジェクト内のルートでXMLファイルを作成し、下記のコマンドのように作成したXMLファイルを引数に追加してください。
 
 ```bash
