@@ -1,0 +1,44 @@
+<deck>
+	<page>
+		<title>
+			Sample Deck
+		</title>
+		<br></br>
+		<image>
+			<path>./images/1.jpg</path>
+			<scale>0.9</scale>
+		</image>
+	</page>
+	<page>
+		<head>
+			xml_deck_gen
+		</head>
+		<text>
+			This product is a Rust application that quickly, easily, and simply generates PDF files of slides.
+		</text>
+		<text>Reads XML files and generates PDFs.</text>
+	</page>
+	<page>
+		<head>List</head>
+		<text>Unordered lists is available.</text>
+		<ul>
+			<li>Apple</li>
+			<li>Banana</li>
+			<li>Cherry</li>
+		</ul>
+		<br></br>
+		<text>Order lists are also available.</text>
+		<ol>
+			<li>Red</li>
+			<li>Green</li>
+			<li>Yellow</li>
+		</ol>
+	</page>
+	<page>
+		<head>Image</head>
+		<text>Images can also be inserted.</text>
+		<image>
+			<path>./images/2.jpg</path>
+		</image>
+	</page>
+</deck>
