@@ -20,7 +20,7 @@
 	</page>
 	<page>
 		<head>List</head>
-		<text>Unordered lists is available.</text>
+		<text>Unordered lists are available.</text>
 		<ul>
 			<li>Apple</li>
 			<li>Banana</li>
